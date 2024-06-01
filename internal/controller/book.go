@@ -65,7 +65,10 @@ func (bookController *BookController) UpdateBookTitle(w http.ResponseWriter, r *
 	w.Header().Set("Content-Type", "application/json")
 	id, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/books/"))
 	book, notFoundErr := bookController.Repository.FindBookByID(id)
-	invalidRequestErr := json.NewDecoder(r.Body).Decode(&book)
+	bodyRequest := struct {
+		Title string `json:"title"`
+	}{}
+	invalidRequestErr := json.NewDecoder(r.Body).Decode(&bodyRequest)
 	if notFoundErr != nil || invalidRequestErr != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := struct {
@@ -76,4 +79,12 @@ func (bookController *BookController) UpdateBookTitle(w http.ResponseWriter, r *
 		w.Write(jsonInBytes)
 		return
 	}
+	bookController.Repository.UpdateBookTitle(book.ID, bodyRequest.Title)
+	updatedBook, _ := bookController.Repository.FindBookByID(book.ID)
+	bookResponse := map[string]interface{}{
+		"id":      updatedBook.ID,
+		"title":   updatedBook.Title,
+		"message": "Book title successfully updated.",
+	}
+	json.NewEncoder(w).Encode(bookResponse)
 }

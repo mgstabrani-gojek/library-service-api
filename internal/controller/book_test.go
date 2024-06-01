@@ -199,3 +199,35 @@ func TestUpdateBoookTitle_GivenNotFoundBook_ThenReturnErrorResponse(t *testing.T
 	assert.Equal(t, expectedResponse, string(data))
 	assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
 }
+
+func TestUpdateBookTitle_GivenValidRequestBodyAndExistedBook_ThenReturnUpdatedBookResponse(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	bookController, teardown := setupTestController(t)
+	defer teardown()
+
+	book := &domain.Book{Title: "Clean Code", Price: 10.99, PublishedDate: "1990-06-01"}
+	db.QueryRow(
+		"INSERT INTO books (title, price, published_date) VALUES ($1, $2, $3) RETURNING id",
+		book.Title, book.Price, book.PublishedDate).Scan(&book.ID)
+
+	bookTitleUpdate := struct {
+		Title string `json:"title"`
+	}{Title: "Updated Title"}
+	bookJSON, _ := json.Marshal(bookTitleUpdate)
+	req := httptest.NewRequest(http.MethodPut, "/books/"+strconv.Itoa(book.ID), bytes.NewReader(bookJSON))
+	w := httptest.NewRecorder()
+	bookController.UpdateBookTitle(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+
+	response := map[string]interface{}{}
+	err := json.NewDecoder(res.Body).Decode(&response)
+	assert.NoError(t, err)
+	assert.Equal(t, "Updated Title", response["title"])
+	assert.Equal(t, "Book title successfully updated.", response["message"])
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	db.Exec("DELETE FROM books WHERE id = $1", response["id"])
+}
