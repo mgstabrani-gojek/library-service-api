@@ -29,6 +29,8 @@ func main() {
 		switch r.Method {
 		case http.MethodGet:
 			bookController.GetAllBooks(w, r)
+		case http.MethodPost:
+			bookController.AddBook(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}

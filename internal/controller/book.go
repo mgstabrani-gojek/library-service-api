@@ -46,4 +46,14 @@ func (bookController *BookController) AddBook(w http.ResponseWriter, r *http.Req
 		w.Write(jsonInBytes)
 		return
 	}
+
+	bookController.Repository.SaveBook(&book)
+	bookResponse := map[string]interface{}{
+		"id":            book.ID,
+		"title":         book.Title,
+		"price":         book.Price,
+		"publishedDate": book.PublishedDate,
+		"message":       "Book successfully added to the library.",
+	}
+	json.NewEncoder(w).Encode(bookResponse)
 }

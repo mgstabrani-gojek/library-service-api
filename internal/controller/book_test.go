@@ -130,3 +130,28 @@ func TestAddBook_GivenInvalidRequestBody_ThenReturnErrorResponse(t *testing.T) {
 	assert.Equal(t, expectedResponse, string(data))
 	assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
 }
+
+func TestAddBook_GivenValidRequestBody_ThenReturnAddedBookResponse(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	bookController, teardown := setupTestController(t)
+	defer teardown()
+
+	book := &domain.Book{Title: "The Great Gatsby", Price: 15.99, PublishedDate: "1925-04-10"}
+	bookJSON, _ := json.Marshal(book)
+	req := httptest.NewRequest(http.MethodPost, "/books", bytes.NewReader(bookJSON))
+	w := httptest.NewRecorder()
+	bookController.AddBook(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+
+	response := map[string]interface{}{}
+	err := json.NewDecoder(res.Body).Decode(&response)
+	assert.NoError(t, err)
+	assert.Equal(t, "The Great Gatsby", response["title"])
+	assert.Equal(t, "Book successfully added to the library.", response["message"])
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	db.Exec("DELETE FROM books WHERE id = $1", response["id"])
+}
