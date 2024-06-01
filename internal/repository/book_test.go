@@ -81,3 +81,15 @@ func TestFindBookById_GivenExistedBook_ThenReturnCorrespondingBook(t *testing.T)
 
 	db.Exec("DELETE FROM books WHERE id = $1", book.ID)
 }
+
+func TestSaveBook_GivenNewBook_ThenNewBookInserted(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	book := &domain.Book{Title: "Clean Code", Price: 15.99, PublishedDate: "1990-06-01T00:00:00Z"}
+	bookRepository := &repository.BookRepository{DB: db}
+	err := bookRepository.SaveBook(book)
+	assert.NoError(t, err)
+
+	db.Exec("DELETE FROM books WHERE id = $1", book.ID)
+}
