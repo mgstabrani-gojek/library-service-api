@@ -92,7 +92,7 @@ func (bookController *BookController) UpdateBookTitle(w http.ResponseWriter, r *
 func (bookController *BookController) DeleteBookByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	id, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/books/"))
-	_, err := bookController.Repository.FindBookByID(id)
+	book, err := bookController.Repository.FindBookByID(id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := struct {
@@ -103,4 +103,10 @@ func (bookController *BookController) DeleteBookByID(w http.ResponseWriter, r *h
 		w.Write(jsonInBytes)
 		return
 	}
+	bookController.Repository.DeleteBookByID(book.ID)
+	bookResponse := map[string]interface{}{
+		"id":      book.ID,
+		"message": "Book successfully deleted.",
+	}
+	json.NewEncoder(w).Encode(bookResponse)
 }
