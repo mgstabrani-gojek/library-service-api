@@ -40,3 +40,19 @@ func TestGetAllBooks_GivenNothing_ThenReturnEmptyBooks(t *testing.T) {
 	assert.NoError(t, err)
 	assert.IsType(t, []domain.Book{}, books)
 }
+
+func TestGetAllBooks_GivenOneBook_ThenReturnListOfBooks(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	book := &domain.Book{ID: 1, Title: "Clean Code", Price: 15.99, PublishedDate: "1990-06-01T00:00:00Z"}
+	db.QueryRow(
+		"INSERT INTO books (title, price, published_date) VALUES ($1, $2, $3) RETURNING id",
+		book.Title, book.Price, book.PublishedDate).Scan(&book.ID)
+
+	bookRepository := &repository.BookRepository{DB: db}
+	books, _ := bookRepository.FindAllBooks()
+	assert.Equal(t, []domain.Book{*book}, books)
+
+	db.Exec("DELETE FROM books WHERE id = $1", book.ID)
+}

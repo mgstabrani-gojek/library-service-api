@@ -14,5 +14,10 @@ func (bookRepository *BookRepository) FindAllBooks() ([]domain.Book, error) {
 	defer rows.Close()
 
 	books := []domain.Book{}
+	for rows.Next() {
+		book := domain.Book{}
+		rows.Scan(&book.ID, &book.Title, &book.Price, &book.PublishedDate)
+		books = append(books, book)
+	}
 	return books, nil
 }
