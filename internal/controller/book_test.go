@@ -155,3 +155,25 @@ func TestAddBook_GivenValidRequestBody_ThenReturnAddedBookResponse(t *testing.T)
 
 	db.Exec("DELETE FROM books WHERE id = $1", response["id"])
 }
+
+func TestUpdateBookTitle_GivenInvalidRequestBody_ThenReturnErrorResponse(t *testing.T) {
+	bookController, teardown := setupTestController(t)
+	defer teardown()
+
+	invalidRequest := struct {
+		Title int `json:"title"`
+	}{Title: 1234}
+	invalidRequestInJSON, _ := json.Marshal(invalidRequest)
+	req := httptest.NewRequest(http.MethodPut, "/books", bytes.NewReader(invalidRequestInJSON))
+	w := httptest.NewRecorder()
+	bookController.UpdateBookTitle(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, _ := io.ReadAll(res.Body)
+
+	expectedResponse := `{"error":"Internal server error."}`
+
+	assert.Equal(t, expectedResponse, string(data))
+	assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
+}

@@ -60,3 +60,18 @@ func (bookController *BookController) AddBook(w http.ResponseWriter, r *http.Req
 	}
 	json.NewEncoder(w).Encode(bookResponse)
 }
+
+func (bookController *BookController) UpdateBookTitle(w http.ResponseWriter, r *http.Request) {
+	book := domain.Book{}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := struct {
+			Error string `json:"error"`
+		}{Error: "Internal server error."}
+
+		jsonInBytes, _ := json.Marshal(response)
+		w.Write(jsonInBytes)
+		return
+	}
+}
