@@ -112,3 +112,20 @@ func TestUpdateBookTitle_GivenUpdatedBookTitle_ThenReturnBookUpdated(t *testing.
 	db.Exec("DELETE FROM books WHERE id = $1", createdBook.ID)
 
 }
+
+func TestDeleteBookById_GivenExistedBook_ThenCorrespondingBookDeleted(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	createdBook := domain.Book{Title: "Clean Code", Price: 15.99, PublishedDate: "1990-06-01T00:00:00Z"}
+	db.QueryRow(
+		"INSERT INTO books (title, price, published_date) VALUES ($1, $2, $3) RETURNING id",
+		createdBook.Title, createdBook.Price, createdBook.PublishedDate).Scan(&createdBook.ID)
+
+	bookRepository := &repository.BookRepository{DB: db}
+	bookRepository.DeleteBookByID(createdBook.ID)
+
+	book := domain.Book{}
+	bookRepository.DB.QueryRow("SELECT id FROM books WHERE id = $1", createdBook.ID).Scan(&book.ID)
+	assert.Equal(t, 0, book.ID)
+}

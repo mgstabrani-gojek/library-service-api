@@ -38,3 +38,8 @@ func (bookRepository *BookRepository) UpdateBookTitle(id int, title string) erro
 	_, err := bookRepository.DB.Exec("UPDATE books SET title = $1 WHERE id = $2", title, id)
 	return err
 }
+
+func (bookRepository *BookRepository) DeleteBookByID(id int) error {
+	_, err := bookRepository.DB.Exec("DELETE FROM books WHERE id = $1", id)
+	return err
+}
