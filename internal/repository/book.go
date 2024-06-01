@@ -21,3 +21,9 @@ func (bookRepository *BookRepository) FindAllBooks() ([]domain.Book, error) {
 	}
 	return books, nil
 }
+
+func (bookRepository *BookRepository) FindBookByID(id int) (domain.Book, error) {
+	book := domain.Book{}
+	err := bookRepository.DB.QueryRow("SELECT id, title, price, published_date FROM books WHERE id = $1", id).Scan(&book.ID, &book.Title, &book.Price, &book.PublishedDate)
+	return book, err
+}

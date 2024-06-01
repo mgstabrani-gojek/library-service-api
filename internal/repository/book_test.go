@@ -31,7 +31,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 	return db
 }
 
-func TestGetAllBooks_GivenNothing_ThenReturnEmptyBooks(t *testing.T) {
+func TestFindAllBooks_GivenNothing_ThenReturnEmptyBooks(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
@@ -41,7 +41,7 @@ func TestGetAllBooks_GivenNothing_ThenReturnEmptyBooks(t *testing.T) {
 	assert.IsType(t, []domain.Book{}, books)
 }
 
-func TestGetAllBooks_GivenOneBook_ThenReturnListOfBooks(t *testing.T) {
+func TestFindAllBooks_GivenOneBook_ThenReturnListOfBooks(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
@@ -55,4 +55,13 @@ func TestGetAllBooks_GivenOneBook_ThenReturnListOfBooks(t *testing.T) {
 	assert.Equal(t, []domain.Book{*book}, books)
 
 	db.Exec("DELETE FROM books WHERE id = $1", book.ID)
+}
+
+func TestFindBookById_GivenNotFoundBook_ThenReturnError(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	bookRepository := &repository.BookRepository{DB: db}
+	_, err := bookRepository.FindBookByID(1)
+	assert.Error(t, err, sql.ErrNoRows)
 }
