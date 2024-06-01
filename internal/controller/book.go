@@ -62,9 +62,11 @@ func (bookController *BookController) AddBook(w http.ResponseWriter, r *http.Req
 }
 
 func (bookController *BookController) UpdateBookTitle(w http.ResponseWriter, r *http.Request) {
-	book := domain.Book{}
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
+	id, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/books/"))
+	book, notFoundErr := bookController.Repository.FindBookByID(id)
+	invalidRequestErr := json.NewDecoder(r.Body).Decode(&book)
+	if notFoundErr != nil || invalidRequestErr != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := struct {
 			Error string `json:"error"`

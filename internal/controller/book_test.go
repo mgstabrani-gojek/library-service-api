@@ -177,3 +177,25 @@ func TestUpdateBookTitle_GivenInvalidRequestBody_ThenReturnErrorResponse(t *test
 	assert.Equal(t, expectedResponse, string(data))
 	assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
 }
+
+func TestUpdateBoookTitle_GivenNotFoundBook_ThenReturnErrorResponse(t *testing.T) {
+	bookController, teardown := setupTestController(t)
+	defer teardown()
+
+	bodyRequest := struct {
+		Title string `json:"title"`
+	}{Title: "Updated Title"}
+	bodyRequestInJSON, _ := json.Marshal(bodyRequest)
+	req := httptest.NewRequest(http.MethodGet, "/books/"+strconv.Itoa(-1), bytes.NewReader(bodyRequestInJSON))
+	w := httptest.NewRecorder()
+	bookController.UpdateBookTitle(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, _ := io.ReadAll(res.Body)
+
+	expectedResponse := `{"error":"Internal server error."}`
+
+	assert.Equal(t, expectedResponse, string(data))
+	assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
+}
