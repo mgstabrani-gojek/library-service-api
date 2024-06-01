@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"gojek/library-service-api/internal/controller"
+	"gojek/library-service-api/internal/repository"
 	"log"
 	"net/http"
 
@@ -19,8 +20,19 @@ func main() {
 	}
 	defer db.Close()
 
+	bookRepository := &repository.BookRepository{DB: db}
+	bookController := &controller.BookController{Repository: bookRepository}
+
 	http.HandleFunc("/ping", controller.HandlePingRequest)
 	http.HandleFunc("/healthz", controller.HandleHealthCheckRequest)
+	http.HandleFunc("/books", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			bookController.GetAllBooks(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
 
 	log.Printf("Server started at port %s", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
