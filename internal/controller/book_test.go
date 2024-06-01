@@ -6,6 +6,7 @@ import (
 	"gojek/library-service-api/internal/controller"
 	"gojek/library-service-api/internal/domain"
 	"gojek/library-service-api/internal/repository"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -87,4 +88,22 @@ func TestGetBookById_GivenExistedBook_ThenReturnCorrespondingBookResponse(t *tes
 	assert.Equal(t, "Clean Code", response.Title)
 
 	db.Exec("DELETE FROM books WHERE id = $1", book.ID)
+}
+
+func TestGetBookById_GivenNotFoundBook_ThenReturnErrorResponse(t *testing.T) {
+	bookController, teardown := setupTestController(t)
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodGet, "/books/"+strconv.Itoa(-1), nil)
+	w := httptest.NewRecorder()
+	bookController.GetBookByID(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, _ := io.ReadAll(res.Body)
+
+	expectedResponse := `{"error":"Internal server error."}`
+
+	assert.Equal(t, expectedResponse, string(data))
+	assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
 }

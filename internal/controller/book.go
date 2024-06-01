@@ -20,6 +20,16 @@ func (bookController *BookController) GetAllBooks(w http.ResponseWriter, r *http
 
 func (bookController *BookController) GetBookByID(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/books/"))
-	book, _ := bookController.Repository.FindBookByID(id)
+	book, err := bookController.Repository.FindBookByID(id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := struct {
+			Error string `json:"error"`
+		}{Error: "Internal server error."}
+
+		jsonInBytes, _ := json.Marshal(response)
+		w.Write(jsonInBytes)
+		return
+	}
 	json.NewEncoder(w).Encode(book)
 }
