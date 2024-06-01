@@ -33,3 +33,8 @@ func (bookRepository *BookRepository) SaveBook(book *domain.Book) error {
 		"INSERT INTO books (title, price, published_date) VALUES ($1, $2, $3) RETURNING id",
 		book.Title, book.Price, book.PublishedDate).Scan(&book.ID)
 }
+
+func (bookRepository *BookRepository) UpdateBookTitle(id int, title string) error {
+	_, err := bookRepository.DB.Exec("UPDATE books SET title = $1 WHERE id = $2", title, id)
+	return err
+}
