@@ -1,6 +1,7 @@
 package controller_test
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"gojek/library-service-api/internal/controller"
@@ -97,6 +98,28 @@ func TestGetBookById_GivenNotFoundBook_ThenReturnErrorResponse(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/books/"+strconv.Itoa(-1), nil)
 	w := httptest.NewRecorder()
 	bookController.GetBookByID(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, _ := io.ReadAll(res.Body)
+
+	expectedResponse := `{"error":"Internal server error."}`
+
+	assert.Equal(t, expectedResponse, string(data))
+	assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
+}
+
+func TestAddBook_GivenInvalidRequestBody_ThenReturnErrorResponse(t *testing.T) {
+	bookController, teardown := setupTestController(t)
+	defer teardown()
+
+	invalidRequest := struct {
+		ID string `json:"id"`
+	}{ID: "invalid request"}
+	invalidRequestInJSON, _ := json.Marshal(invalidRequest)
+	req := httptest.NewRequest(http.MethodPost, "/books", bytes.NewReader(invalidRequestInJSON))
+	w := httptest.NewRecorder()
+	bookController.AddBook(w, req)
 
 	res := w.Result()
 	defer res.Body.Close()
