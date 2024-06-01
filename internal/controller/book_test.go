@@ -231,3 +231,21 @@ func TestUpdateBookTitle_GivenValidRequestBodyAndExistedBook_ThenReturnUpdatedBo
 
 	db.Exec("DELETE FROM books WHERE id = $1", response["id"])
 }
+
+func TestDeleteBookById_GivenNotFoundBook_ThenReturnErrorResponse(t *testing.T) {
+	bookController, teardown := setupTestController(t)
+	defer teardown()
+
+	req := httptest.NewRequest(http.MethodDelete, "/books/"+strconv.Itoa(-1), nil)
+	w := httptest.NewRecorder()
+	bookController.DeleteBookByID(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, _ := io.ReadAll(res.Body)
+
+	expectedResponse := `{"error":"Internal server error."}`
+
+	assert.Equal(t, expectedResponse, string(data))
+	assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
+}

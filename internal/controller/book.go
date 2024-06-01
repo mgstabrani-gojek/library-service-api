@@ -88,3 +88,19 @@ func (bookController *BookController) UpdateBookTitle(w http.ResponseWriter, r *
 	}
 	json.NewEncoder(w).Encode(bookResponse)
 }
+
+func (bookController *BookController) DeleteBookByID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id, _ := strconv.Atoi(strings.TrimPrefix(r.URL.Path, "/books/"))
+	_, err := bookController.Repository.FindBookByID(id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := struct {
+			Error string `json:"error"`
+		}{Error: "Internal server error."}
+
+		jsonInBytes, _ := json.Marshal(response)
+		w.Write(jsonInBytes)
+		return
+	}
+}

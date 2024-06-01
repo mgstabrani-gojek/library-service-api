@@ -41,6 +41,8 @@ func main() {
 			bookController.GetBookByID(w, r)
 		case http.MethodPut:
 			bookController.UpdateBookTitle(w, r)
+		case http.MethodDelete:
+			bookController.DeleteBookByID(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
