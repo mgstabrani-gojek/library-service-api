@@ -65,3 +65,19 @@ func TestFindBookById_GivenNotFoundBook_ThenReturnError(t *testing.T) {
 	_, err := bookRepository.FindBookByID(1)
 	assert.Error(t, err, sql.ErrNoRows)
 }
+
+func TestFindBookById_GivenExistedBook_ThenReturnCorrespondingBook(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	createdBook := domain.Book{Title: "Clean Code", Price: 15.99, PublishedDate: "1990-06-01T00:00:00Z"}
+	db.QueryRow(
+		"INSERT INTO books (title, price, published_date) VALUES ($1, $2, $3) RETURNING id",
+		createdBook.Title, createdBook.Price, createdBook.PublishedDate).Scan(&createdBook.ID)
+
+	bookRepository := &repository.BookRepository{DB: db}
+	book, _ := bookRepository.FindBookByID(createdBook.ID)
+	assert.Equal(t, createdBook, book)
+
+	db.Exec("DELETE FROM books WHERE id = $1", book.ID)
+}
