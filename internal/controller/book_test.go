@@ -8,6 +8,7 @@ import (
 	"gojek/library-service-api/internal/repository"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -60,4 +61,30 @@ func TestGetAllBooks_GivenNothing_ThenReturnEmptyBooksResponse(t *testing.T) {
 	err := json.NewDecoder(res.Body).Decode(&response)
 	assert.NoError(t, err)
 	assert.Empty(t, response["books"])
+}
+
+func TestGetBookById_GivenExistedBook_ThenReturnCorrespondingBookResponse(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	bookController, teardown := setupTestController(t)
+	defer teardown()
+
+	book := &domain.Book{Title: "Clean Code", Price: 10.99, PublishedDate: "1990-06-01"}
+	db.QueryRow(
+		"INSERT INTO books (title, price, published_date) VALUES ($1, $2, $3) RETURNING id",
+		book.Title, book.Price, book.PublishedDate).Scan(&book.ID)
+	req := httptest.NewRequest(http.MethodGet, "/books/"+strconv.Itoa(book.ID), nil)
+	w := httptest.NewRecorder()
+	bookController.GetBookByID(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	response := domain.Book{}
+	err := json.NewDecoder(res.Body).Decode(&response)
+	assert.NoError(t, err)
+	assert.Equal(t, "Clean Code", response.Title)
+
+	db.Exec("DELETE FROM books WHERE id = $1", book.ID)
 }
