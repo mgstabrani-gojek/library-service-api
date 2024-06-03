@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"gojek/library-service-api/internal/config"
 	"gojek/library-service-api/internal/controller"
 	"gojek/library-service-api/internal/repository"
 	"log"
@@ -10,10 +11,16 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const port = "8080"
-
 func main() {
-	dbConnection := "host=localhost user=postgres dbname=library sslmode=disable"
+	port := config.GetEnv("PORT", "8080")
+
+	dbConfig := config.NewDBConfig()
+
+	dbConnection := "host=" + dbConfig.Host + " user=" + dbConfig.User + " dbname=" + dbConfig.DBName + " sslmode=" + dbConfig.SSLMode
+	if dbConfig.Password != "" {
+		dbConnection += " password=" + dbConfig.Password
+	}
+
 	db, err := sql.Open("postgres", dbConnection)
 	if err != nil {
 		log.Fatal(err)
